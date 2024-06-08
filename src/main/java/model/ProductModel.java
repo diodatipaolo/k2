@@ -6,10 +6,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ProductModel {
 
     private static final String TABLE_NAME = "Prodotto";
+    private static final Logger logger = Logger.getLogger(ProductModel.class.getName());
 
     public synchronized void doSave(ProductBean product) throws SQLException {
         Connection connection = null;
@@ -31,6 +34,12 @@ public class ProductModel {
 
             preparedStatement.executeUpdate();
             connection.commit();
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore durante l'inserimento del prodotto", e);
+            throw new SQLException("Errore nel database, contattare l'amministratore.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Errore generale durante l'inserimento del prodotto", e);
+            throw new SQLException("Errore del sistema, contattare l'amministratore.");
         } finally {
             try {
                 if (preparedStatement != null)
@@ -69,6 +78,12 @@ public class ProductModel {
                 bean.setData(rs.getDate("dataAnnuncio"));
                 bean.setImmagine(rs.getString("model"));
             }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore durante il recupero del prodotto per codice", e);
+            throw new SQLException("Errore nel database, contattare l'amministratore.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Errore generale durante il recupero del prodotto per codice", e);
+            throw new SQLException("Errore del sistema, contattare l'amministratore.");
         } finally {
             try {
                 if (preparedStatement != null)
@@ -88,7 +103,7 @@ public class ProductModel {
 
         int result = 0;
 
-        String deleteSQL = "UPDATE " + ProductModel.TABLE_NAME + " SET deleted = false WHERE codice = ?";
+        String deleteSQL = "UPDATE " + ProductModel.TABLE_NAME + " SET deleted = true WHERE codice = ?";
 
         try {
             connection = DriverManagerConnectionPool.getConnection();
@@ -97,6 +112,12 @@ public class ProductModel {
 
             result = preparedStatement.executeUpdate();
             connection.commit();
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore durante l'eliminazione del prodotto", e);
+            throw new SQLException("Errore nel database, contattare l'amministratore.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Errore generale durante l'eliminazione del prodotto", e);
+            throw new SQLException("Errore del sistema, contattare l'amministratore.");
         } finally {
             try {
                 if (preparedStatement != null)
@@ -116,7 +137,7 @@ public class ProductModel {
 
         Collection<ProductBean> products = new LinkedList<ProductBean>();
 
-        String selectSQL = "SELECT * FROM " + ProductModel.TABLE_NAME + " WHERE deleted = 'false' AND nomeTipologia = ?";
+        String selectSQL = "SELECT * FROM " + ProductModel.TABLE_NAME + " WHERE deleted = false AND nomeTipologia = ?";
         String sql2 = "SELECT AVG(votazione) FROM Recensione WHERE codiceProdotto = ?";
         
         try {
@@ -151,6 +172,12 @@ public class ProductModel {
                 
                 products.add(bean);
             }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore durante il recupero di tutti i prodotti", e);
+            throw new SQLException("Errore nel database, contattare l'amministratore.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Errore generale durante il recupero di tutti i prodotti", e);
+            throw new SQLException("Errore del sistema, contattare l'amministratore.");
         } finally {
             try {
                 if (preparedStatement != null)
@@ -187,8 +214,13 @@ public class ProductModel {
             
             return lista;
         }
+        catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore durante l'eliminazione del prodotto dalla lista", e);
+            throw new RuntimeException("Errore nel database, contattare l'amministratore.");
+        }
         catch (Exception e) {
-            return lista;
+            logger.log(Level.SEVERE, "Errore generale durante l'eliminazione del prodotto dalla lista", e);
+            throw new RuntimeException("Errore del sistema, contattare l'amministratore.");
         }
         finally {
             if (con != null) {
@@ -217,8 +249,13 @@ public class ProductModel {
             ps.executeUpdate();
             con.commit();
         }
+        catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore durante l'aggiornamento del prodotto", e);
+            throw new RuntimeException("Errore nel database, contattare l'amministratore.");
+        }
         catch (Exception e) {
-            // Log the exception
+            logger.log(Level.SEVERE, "Errore generale durante l'aggiornamento del prodotto", e);
+            throw new RuntimeException("Errore del sistema, contattare l'amministratore.");
         }
         finally {
             if (con != null) {
@@ -247,7 +284,12 @@ public class ProductModel {
             }
             return bean;
         }
+        catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore durante il recupero della recensione", e);
+            return null;
+        }
         catch(Exception e) {
+            logger.log(Level.SEVERE, "Errore generale durante il recupero della recensione", e);
             return null;
         }
         finally {
@@ -277,7 +319,12 @@ public class ProductModel {
             String msg = "Dai un'occhiata a " + nome + " in " + tipologia;
             return msg;
         }
+        catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore durante il recupero del codice random del prodotto", e);
+            return riprova;
+        }
         catch(Exception e) {
+            logger.log(Level.SEVERE, "Errore generale durante il recupero del codice random del prodotto", e);
             return riprova;
         }
         finally {
